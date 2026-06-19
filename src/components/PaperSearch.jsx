@@ -78,23 +78,10 @@ export default function PaperSearch({ onPaperSaved, library = [], initialOpen = 
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
 
-      const papers = (data.data || [])
-        .filter((p) => p.externalIds?.ArXiv)
-        .slice(0, 6)
-        .map((p) => ({
-          title: p.title,
-          authors: (p.authors || []).slice(0, 3).map((a) => a.name).join(', '),
-          year: p.year,
-          venue: p.venue,
-          abstract: p.abstract || '',
-          arxiv_id: p.externalIds.ArXiv,
-          citationCount: p.citationCount || 0,
-          publicationDate: p.publicationDate || null,
-          keywords: [],
-        }));
+      const papers = data.data || [];
 
       if (papers.length === 0) {
-        setError('No free papers found for this topic. Try different keywords.');
+        setError(data.message || 'No free papers found. Try different keywords.');
       } else {
         setResults(papers);
       }
