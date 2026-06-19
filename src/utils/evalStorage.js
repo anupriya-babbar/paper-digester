@@ -9,7 +9,7 @@
 //   ALTER TABLE eval_results ADD CONSTRAINT eval_results_user_target_type_unique
 //   UNIQUE (user_id, target_id, eval_type);
 
-import { supabase } from '../supabaseClient'; // adjust path if yours differs
+import { supabase } from '../lib/supabase';; // adjust path if yours differs
 
 const LS_PREFIX = 'pd-eval-v2';
 
