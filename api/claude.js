@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   }
 
   const { prompt, maxTokens = 1000, system } = req.body;
+  const safeMaxTokens = Math.min(maxTokens, 3000);
 
   if (!prompt) {
     return res.status(400).json({ error: 'prompt required' });
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
 
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: maxTokens,
+      max_tokens: safeMaxTokens,
       messages: [{ role: 'user', content: prompt }],
       ...(system ? { system } : {}),
     });

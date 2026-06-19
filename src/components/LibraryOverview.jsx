@@ -62,12 +62,11 @@ export default function LibraryOverview({
   onSaveToLibrary,
   onRefresh,
 }) {
-  const stats = useMemo(() => {
-    const summarized = library.filter(
-      (p) => p.summarized || p.source === 'upload' || p.source === 'search',
-    );
-    return { total: library.length, chains: chains.length, summarized: summarized.length };
-  }, [library, chains]);
+  const stats = useMemo(() => ({
+    total: library.length,
+    chains: chains.length,
+    synthesized: chains.filter((c) => c.synthesis).length,
+  }), [library, chains]);
 
   const yearData = useMemo(() => {
     const counts = {};
@@ -124,9 +123,9 @@ export default function LibraryOverview({
 
       {/* Stats row */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
-        <StatCard label="Papers" value={stats.total} />
-        <StatCard label="Summarized" value={stats.summarized} color="#059669" />
-        <StatCard label="Chains" value={stats.chains} color="#7C3AED" />
+        <StatCard label="Total papers" value={stats.total} />
+        <StatCard label="Chains built" value={stats.chains} color="#7C3AED" />
+        <StatCard label="Synthesized chains" value={stats.synthesized} color="#059669" />
       </div>
 
       {/* Charts row */}

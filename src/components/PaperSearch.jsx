@@ -174,11 +174,31 @@ export default function PaperSearch({ onPaperSaved, library = [], initialOpen = 
 
     setPanelStatus('analyzing');
     try {
-      const raw = await callClaude(fullPrompt(text), 1200);
-      const summary = JSON.parse(raw);
+      const raw = await callClaude(fullPrompt(text), 2000);
+
+      let cleaned = raw
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+
+      if (start === -1 || end === -1) {
+        console.error('No JSON found in response:', cleaned.slice(0, 200));
+        setPanelStatus('error');
+        return;
+      }
+
+      const jsonStr = cleaned.slice(start, end + 1);
+      console.log('Parsing JSON of length:', jsonStr.length);
+
+      const summary = JSON.parse(jsonStr);
+      console.log('Parsed summary keys:', Object.keys(summary));
       setPanelSummary(summary);
       setPanelStatus('done');
-    } catch {
+    } catch (e) {
+      console.error('Parse error:', e.message);
       setPanelStatus('error');
     }
   }

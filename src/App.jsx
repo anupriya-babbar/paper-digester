@@ -252,7 +252,7 @@ export default function App() {
       }}>
         {/* Search bar header */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
+          display: 'flex', alignItems: 'center', gap: 8,
           padding: '10px 16px',
           borderBottom: '0.5px solid #e0e3e8',
           flexShrink: 0,
@@ -289,20 +289,29 @@ export default function App() {
             </button>
           )}
 
-          {/* Search pill */}
-          <div
-            onClick={() => { setSearchMode(true); setAddPaperOpen(false); }}
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Search icon button */}
+          <button
+            onClick={() => setSearchMode(true)}
+            title="Search papers"
+            aria-label="Search papers"
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-              padding: '7px 12px',
+              width: 34, height: 34, borderRadius: 8,
               border: '0.5px solid #d1d5db',
-              borderRadius: 8, background: '#f9fafb',
-              cursor: 'text',
+              background: 'transparent', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#6b7280', flexShrink: 0,
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#f3f4f6'; e.currentTarget.style.color = '#111827'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; }}
           >
-            <span style={{ fontSize: 14, color: '#9ca3af' }}>🔍</span>
-            <span style={{ fontSize: 13, color: '#9ca3af' }}>Search arXiv papers…</span>
-          </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
 
           {/* Add Paper button */}
           <button
@@ -332,9 +341,10 @@ export default function App() {
               <button
                 onClick={() => setSearchMode(false)}
                 style={{
+                  fontSize: 13, color: '#6b7280',
                   background: 'transparent', border: 'none',
-                  color: '#6b7280', fontSize: 13, cursor: 'pointer',
-                  marginBottom: 12, padding: 0,
+                  cursor: 'pointer', marginBottom: 16, padding: 0,
+                  display: 'flex', alignItems: 'center', gap: 4,
                 }}
               >
                 ← Back

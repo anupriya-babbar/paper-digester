@@ -169,6 +169,12 @@ function Section({ label, children }) {
 export default function SummaryPanel({ isOpen, paper, status, summary, onClose, onSave }) {
   const [toast, setToast] = useState(false);
 
+  console.log('Panel state:', {
+    status,
+    hasSummary: !!summary,
+    summaryKeys: summary ? Object.keys(summary) : null,
+  });
+
   function handleSave() {
     if (summary) onSave(summary);
     setToast(true);
