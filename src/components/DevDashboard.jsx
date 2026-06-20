@@ -47,7 +47,7 @@ function ScoreBar({ label, value, inverted = false }) {
 
 export default function DevDashboard({ library, chains, userId }) {
   const [feedback, setFeedback] = useState([]);
-  const [selectedPaper, setSelectedPaper] = useState('');
+  const [selectedPaper, setSelectedPaper] = useState(null);
   const [selectedChain, setSelectedChain] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -144,7 +144,7 @@ export default function DevDashboard({ library, chains, userId }) {
   }
 
   const handleRunSummaryEval = async (paper) => {
-    if (!paper) return;
+    if (!paper?.id) return;
     setEvalRunning(true);
     setSummaryEvalResult(null);
     try {
@@ -187,7 +187,6 @@ export default function DevDashboard({ library, chains, userId }) {
     return ids.length >= 2;
   });
 
-  const selectedPaperObj = library.find((p) => p.id === selectedPaper);
 
   const CARD = {
     background: 'var(--card)', border: '0.5px solid var(--border)',
@@ -317,8 +316,12 @@ export default function DevDashboard({ library, chains, userId }) {
         <div style={CARD}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <select
-              value={selectedPaper}
-              onChange={(e) => { setSelectedPaper(e.target.value); setSummaryEvalResult(null); }}
+              value={selectedPaper?.id || ''}
+              onChange={(e) => {
+                const paper = summarizedPapers.find(p => p.id === e.target.value);
+                setSelectedPaper(paper || null);
+                setSummaryEvalResult(null);
+              }}
               style={SELECT_STYLE}
             >
               <option value=''>Select a paper…</option>
@@ -330,12 +333,12 @@ export default function DevDashboard({ library, chains, userId }) {
             </select>
             <button
               onClick={() => handleRunSummaryEval(selectedPaper)}
-              disabled={!selectedPaper || evalRunning}
+              disabled={!selectedPaper?.id || evalRunning}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: !selectedPaper || evalRunning ? '#ccc' : '#1B4F9C',
+                background: !selectedPaper?.id || evalRunning ? '#ccc' : '#1B4F9C',
                 color: '#fff', fontSize: 13, fontWeight: 500,
-                cursor: !selectedPaper || evalRunning ? 'not-allowed' : 'pointer',
+                cursor: !selectedPaper?.id || evalRunning ? 'not-allowed' : 'pointer',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -343,7 +346,7 @@ export default function DevDashboard({ library, chains, userId }) {
             </button>
           </div>
 
-          {selectedPaperObj && !selectedPaperObj.abstract && (
+          {selectedPaper && !selectedPaper.abstract && (
             <div style={{
               fontSize: 12, color: '#854F0B', background: '#FAEEDA',
               padding: '8px 12px', borderRadius: 6, marginBottom: 12,
