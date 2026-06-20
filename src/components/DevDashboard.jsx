@@ -375,9 +375,10 @@ export default function DevDashboard({ library, chains, userId }) {
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', margin: '12px 0 4px' }}>
                 Free Checks
               </div>
-              <EvalBar label="Keyword Coverage" score={summaryEvalResult.keywordCoverage} />
-              <EvalBar label="Number Preservation" score={summaryEvalResult.numberPreservation} />
-              <EvalBar label="Length Sanity" score={summaryEvalResult.lengthSanity} />
+              {console.log('[Dashboard] summaryEvalResult:', JSON.stringify(summaryEvalResult?.freeChecks))}
+              <EvalBar label="Keyword Coverage" score={summaryEvalResult.freeChecks?.keywordCoverage?.score} />
+              <EvalBar label="Number Preservation" score={summaryEvalResult.freeChecks?.numberPreservation?.score} />
+              <EvalBar label="Length Sanity" score={summaryEvalResult.freeChecks?.lengthSanity?.score} />
 
               {summaryEvalResult.faithfulnessIssues?.length > 0 && (
                 <div style={{ marginTop: 12 }}>
