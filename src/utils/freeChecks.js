@@ -12,6 +12,7 @@
  * Low score = summary missed the paper's own topic labels.
  */
 export function keywordCoverage(keywords, summaryText) {
+  console.log('[freeChecks] keywordCoverage called with:', keywords?.length, 'keywords,', summaryText?.length, 'chars');
   if (!keywords?.length || !summaryText) return null;
   const text = summaryText.toLowerCase();
   const found = keywords.filter(kw => text.includes(kw.toLowerCase()));

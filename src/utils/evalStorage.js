@@ -107,6 +107,7 @@ export async function getAllEvalResults(userId) {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    console.log('[evalStorage] records fetched:', data?.length, data?.[0]?.results);
     return data || [];
   } catch (err) {
     console.warn('[evalStorage] getAllEvalResults Supabase failed:', err.message);
@@ -129,9 +130,6 @@ export async function getAllEvalResults(userId) {
 // AGGREGATION (for Overview tab)
 // ─────────────────────────────────────────────
 
-const SUMMARY_KEYS = ['overall', 'faithfulness', 'coverage', 'modeFidelity', 'freeScore'];
-const CHAIN_KEYS   = ['overall', 'citationGrounding', 'contradictionReality', 'gapNovelty', 'synthesisQuality', 'citationDensity'];
-
 /**
  * Compute aggregate stats from all eval results.
  * Returns: { summary, chain, needsAttention[], summaryCount, chainCount }
@@ -143,8 +141,8 @@ export function computeOverviewStats(allResults) {
   return {
     summaryCount: summaryRecords.length,
     chainCount: chainRecords.length,
-    summary: summaryRecords.length ? _avgDimensions(summaryRecords, SUMMARY_KEYS) : null,
-    chain: chainRecords.length ? _avgDimensions(chainRecords, CHAIN_KEYS) : null,
+    summary: summaryRecords.length ? _avgDimensions(summaryRecords) : null,
+    chain: chainRecords.length ? _avgDimensions(chainRecords) : null,
     needsAttention: summaryRecords
       .filter(r => typeof r.results?.overall === 'number' && r.results.overall < 70)
       .map(r => ({
@@ -155,7 +153,14 @@ export function computeOverviewStats(allResults) {
   };
 }
 
-function _avgDimensions(records, keys) {
+function _avgDimensions(records) {
+  const summaryKeys = ['overall', 'faithfulness', 'coverage', 'modeFidelity', 'freeScore'];
+  const chainKeys = ['overall', 'citationGrounding', 'contradictionReality', 'gapNovelty', 'synthesisQuality', 'citationDensity'];
+
+  const keys = records[0]?.results?.citationGrounding !== undefined
+    ? chainKeys
+    : summaryKeys;
+
   const avg = {};
   for (const key of keys) {
     const scores = records

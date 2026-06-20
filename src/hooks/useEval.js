@@ -137,13 +137,25 @@ export function useEval() {
     console.log('[useEval] keywords:', paper?.keywords, 'type:', typeof paper?.keywords);
     const keywords = Array.isArray(paper.keywords)
       ? paper.keywords
-      : JSON.parse(paper.keywords || '[]');
+      : (typeof paper.keywords === 'string' ? JSON.parse(paper.keywords || '[]') : []);
+
+    const summaryTextForFree = summaryText || '';
+    const abstractForFree = abstract || '';
 
     const freeChecks = {
-      keywordCoverage:    keywordCoverage(keywords, summaryText),
-      numberPreservation: hasAbstract ? numberPreservation(abstract, summaryText) : null,
-      lengthSanity:       hasAbstract ? lengthSanity(mode, summaryText, abstract) : null,
+      keywordCoverage: keywords.length > 0
+        ? keywordCoverage(keywords, summaryTextForFree)
+        : null,
+      numberPreservation: abstractForFree.length > 50
+        ? numberPreservation(abstractForFree, summaryTextForFree)
+        : null,
+      lengthSanity: mode === 'tldr' && abstractForFree.length > 0
+        ? lengthSanity(mode, summaryTextForFree, abstractForFree)
+        : null,
     };
+
+    console.log('[useEval] freeChecks:', freeChecks);
+    console.log('[useEval] keywords used:', keywords);
     const freeScore = aggregateFreeChecks(freeChecks);
 
     // Combined overall: LLM dims 70%, free checks 30%
