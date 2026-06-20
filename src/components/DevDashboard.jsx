@@ -57,6 +57,7 @@ export default function DevDashboard({ library, chains, userId }) {
   const [chainEvalResult, setChainEvalResult] = useState(null);
   const [overviewStats, setOverviewStats] = useState(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
+  const [evalCount, setEvalCount] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -105,7 +106,7 @@ export default function DevDashboard({ library, chains, userId }) {
       setOverviewStats(computeOverviewStats(records));
       setOverviewLoading(false);
     });
-  }, [userId]);
+  }, [userId, evalCount]);
 
   async function patchDemoAbstracts() {
     const { data: demoPapers } = await supabase
@@ -150,6 +151,7 @@ export default function DevDashboard({ library, chains, userId }) {
     try {
       const results = await runSummaryEval(paper, userId);
       setSummaryEvalResult(results);
+      setEvalCount(prev => prev + 1);
     } finally {
       setEvalRunning(false);
     }
@@ -162,6 +164,7 @@ export default function DevDashboard({ library, chains, userId }) {
     try {
       const results = await runChainEval(chain, library, userId);
       setChainEvalResult(results);
+      setEvalCount(prev => prev + 1);
     } finally {
       setEvalRunning(false);
     }
@@ -412,7 +415,10 @@ export default function DevDashboard({ library, chains, userId }) {
               ))}
             </select>
             <button
-              onClick={() => handleRunChainEval(selectedChain)}
+              onClick={() => {
+                console.log('[ChainEval] selected:', selectedChain, 'chains prop:', chains?.length, 'papers prop:', library?.length);
+                handleRunChainEval(selectedChain);
+              }}
               disabled={!selectedChain || evalRunning}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none',
