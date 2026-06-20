@@ -48,7 +48,7 @@ function ScoreBar({ label, value, inverted = false }) {
 export default function DevDashboard({ library, chains, userId }) {
   const [feedback, setFeedback] = useState([]);
   const [selectedPaper, setSelectedPaper] = useState(null);
-  const [selectedChain, setSelectedChain] = useState('');
+  const [selectedChain, setSelectedChain] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
   const { runSummaryEval, runChainEval } = useEval();
@@ -151,20 +151,21 @@ export default function DevDashboard({ library, chains, userId }) {
     try {
       const results = await runSummaryEval(paper, userId);
       setSummaryEvalResult(results);
-      setEvalCount(prev => prev + 1);
+      setTimeout(() => setEvalCount(prev => prev + 1), 1000);
     } finally {
       setEvalRunning(false);
     }
   };
 
   const handleRunChainEval = async (chain) => {
-    if (!chain) return;
+    console.log('[ChainEval] running with chain:', chain?.id, chain?.name, 'paper_ids:', chain?.paper_ids?.length);
+    if (!chain?.id) return;
     setEvalRunning(true);
     setChainEvalResult(null);
     try {
       const results = await runChainEval(chain, library, userId);
       setChainEvalResult(results);
-      setEvalCount(prev => prev + 1);
+      setTimeout(() => setEvalCount(prev => prev + 1), 1000);
     } finally {
       setEvalRunning(false);
     }
@@ -403,8 +404,12 @@ export default function DevDashboard({ library, chains, userId }) {
         <div style={CARD}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <select
-              value={selectedChain}
-              onChange={(e) => { setSelectedChain(e.target.value); setChainEvalResult(null); }}
+              value={selectedChain?.id || ''}
+              onChange={(e) => {
+                const chain = chains.find(c => c.id === e.target.value);
+                setSelectedChain(chain || null);
+                setChainEvalResult(null);
+              }}
               style={SELECT_STYLE}
             >
               <option value=''>Select a chain…</option>
@@ -415,16 +420,13 @@ export default function DevDashboard({ library, chains, userId }) {
               ))}
             </select>
             <button
-              onClick={() => {
-                console.log('[ChainEval] selected:', selectedChain, 'chains prop:', chains?.length, 'papers prop:', library?.length);
-                handleRunChainEval(selectedChain);
-              }}
-              disabled={!selectedChain || evalRunning}
+              onClick={() => handleRunChainEval(selectedChain)}
+              disabled={!selectedChain?.id || evalRunning}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none',
-                background: !selectedChain || evalRunning ? '#ccc' : '#1B4F9C',
+                background: !selectedChain?.id || evalRunning ? '#ccc' : '#1B4F9C',
                 color: '#fff', fontSize: 13, fontWeight: 500,
-                cursor: !selectedChain || evalRunning ? 'not-allowed' : 'pointer',
+                cursor: !selectedChain?.id || evalRunning ? 'not-allowed' : 'pointer',
                 whiteSpace: 'nowrap',
               }}
             >
