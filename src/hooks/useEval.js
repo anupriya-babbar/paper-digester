@@ -174,6 +174,11 @@ export function useEval() {
       overall = freeScore;
     }
 
+    console.log('[useEval] freeChecks detail:',
+      JSON.stringify(freeChecks, null, 2));
+    console.log('[useEval] freeScore:', freeScore);
+    console.log('[useEval] overall:', overall);
+
     const results = {
       // Overall
       overall,
