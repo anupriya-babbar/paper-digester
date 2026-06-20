@@ -99,10 +99,25 @@ export function useEval() {
   // ── SUMMARY EVAL ──────────────────────────
 
   const runSummaryEval = useCallback(async (paper, userId) => {
+    console.log('[useEval] runSummaryEval called', {
+      paperId: paper?.id,
+      mode: paper?.mode,
+      hasAbstract: !!(paper?.abstract),
+      abstractLength: paper?.abstract?.length,
+      oneliner: paper?.oneliner?.length,
+      concept: paper?.concept?.length,
+      findings: paper?.findings?.length,
+      results: paper?.results?.length,
+      tldr: paper?.tldr?.length,
+      keywords: paper?.keywords?.length,
+    });
+
     const summaryText = extractSummaryText(paper);
     const abstract    = paper.abstract || '';
     const mode        = paper.mode || 'full';
     const hasAbstract = abstract.length > 50; // need something meaningful
+
+    console.log('[useEval] summaryText length:', summaryText?.length, 'hasAbstract:', hasAbstract);
 
     // Run LLM checks in parallel where possible
     // faithfulness + coverage need abstract; modeFidelity doesn't
