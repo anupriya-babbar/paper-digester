@@ -129,9 +129,12 @@ export async function getAllEvalResults(userId) {
 // AGGREGATION (for Overview tab)
 // ─────────────────────────────────────────────
 
+const SUMMARY_KEYS = ['overall', 'faithfulness', 'coverage', 'modeFidelity', 'freeScore'];
+const CHAIN_KEYS   = ['overall', 'citationGrounding', 'contradictionReality', 'gapNovelty', 'synthesisQuality', 'citationDensity'];
+
 /**
  * Compute aggregate stats from all eval results.
- * Returns: { avgSummary, avgChain, needsAttention[], summaryCount, chainCount }
+ * Returns: { summary, chain, needsAttention[], summaryCount, chainCount }
  */
 export function computeOverviewStats(allResults) {
   const summaryRecords = allResults.filter(r => r.eval_type === 'summary');
@@ -140,8 +143,8 @@ export function computeOverviewStats(allResults) {
   return {
     summaryCount: summaryRecords.length,
     chainCount: chainRecords.length,
-    avgSummary: summaryRecords.length ? _avgDimensions(summaryRecords) : null,
-    avgChain: chainRecords.length ? _avgDimensions(chainRecords) : null,
+    summary: summaryRecords.length ? _avgDimensions(summaryRecords, SUMMARY_KEYS) : null,
+    chain: chainRecords.length ? _avgDimensions(chainRecords, CHAIN_KEYS) : null,
     needsAttention: summaryRecords
       .filter(r => typeof r.results?.overall === 'number' && r.results.overall < 70)
       .map(r => ({
@@ -152,14 +155,9 @@ export function computeOverviewStats(allResults) {
   };
 }
 
-function _avgDimensions(records) {
-  // Collect all numeric keys across records
-  const allKeys = new Set(
-    records.flatMap(r => Object.keys(r.results || {}).filter(k => typeof r.results[k] === 'number'))
-  );
-
+function _avgDimensions(records, keys) {
   const avg = {};
-  for (const key of allKeys) {
+  for (const key of keys) {
     const scores = records
       .map(r => r.results?.[key])
       .filter(v => typeof v === 'number' && !isNaN(v));

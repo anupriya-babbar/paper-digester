@@ -134,8 +134,13 @@ export function useEval() {
     ]);
 
     // Free checks (synchronous, zero cost)
+    console.log('[useEval] keywords:', paper?.keywords, 'type:', typeof paper?.keywords);
+    const keywords = Array.isArray(paper.keywords)
+      ? paper.keywords
+      : JSON.parse(paper.keywords || '[]');
+
     const freeChecks = {
-      keywordCoverage:    keywordCoverage(paper.keywords, summaryText),
+      keywordCoverage:    keywordCoverage(keywords, summaryText),
       numberPreservation: hasAbstract ? numberPreservation(abstract, summaryText) : null,
       lengthSanity:       hasAbstract ? lengthSanity(mode, summaryText, abstract) : null,
     };
