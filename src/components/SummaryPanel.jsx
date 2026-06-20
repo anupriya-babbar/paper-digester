@@ -205,7 +205,7 @@ export default function SummaryPanel({ isOpen, paper, status, summary, onClose, 
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          position: 'fixed', right: 0, top: 0, height: '100vh',
+          position: 'fixed', right: 0, top: 0, maxHeight: '90vh',
           width: 'min(420px, 100vw)',
           background: '#fff',
           boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
@@ -246,7 +246,7 @@ export default function SummaryPanel({ isOpen, paper, status, summary, onClose, 
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 20px', borderTop: '0.5px solid #e0e3e8', flexShrink: 0 }}>
+        <div style={{ position: 'sticky', bottom: 0, background: '#fff', padding: '16px', borderTop: '1px solid #e5e7eb', zIndex: 10 }}>
           <button
             onClick={handleSave}
             disabled={status !== 'done' || !summary}
