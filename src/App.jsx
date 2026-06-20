@@ -79,7 +79,7 @@ export default function App() {
   } = useSuggestions(user?.id, library, chains);
 
   // ── Background eval ───────────────────────────────────────────────────────
-  const { runSummaryEval, runChainEval } = useBackgroundEval();
+  const { triggerBackgroundEval } = useBackgroundEval(user?.id);
   const [evalStatuses, setEvalStatuses] = useState({});
 
   function handleEvalComplete(paperId, overall, scores) {
@@ -110,7 +110,7 @@ export default function App() {
     const saved = await addPaper(paper);
     if (saved?.id) {
       setEvalStatuses((prev) => ({ ...prev, [saved.id]: { status: 'running' } }));
-      runSummaryEval(saved, handleEvalComplete);
+      triggerBackgroundEval(saved);
     }
   };
 
@@ -177,7 +177,7 @@ export default function App() {
     const resolvedChain = saved ?? chain;
     setSelectedChain(resolvedChain);
     if (resolvedChain.synthesis) {
-      runChainEval(resolvedChain, library, handleChainEvalComplete);
+      setEvalStatuses((prev) => ({ ...prev, [resolvedChain.id]: { status: 'running' } }));
     }
   };
 
@@ -198,7 +198,7 @@ export default function App() {
       source: 'search',
       summarized: false,
       citationCount: paper.citationCount || 0,
-      arxivId: paper.externalIds?.ArXiv,
+      arxiv_id: paper.externalIds?.ArXiv || paper.arxivId || null,
       publicationDate: paper.publicationDate || null,
     });
   };
