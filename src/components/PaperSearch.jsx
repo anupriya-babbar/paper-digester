@@ -218,6 +218,8 @@ export default function PaperSearch({ onPaperSaved, library = [], initialOpen = 
         figures: summary.figures || '',
         findings: '',
         keywords: summary.keywords || panelPaper.keywords || [],
+        abstract: panelPaper.abstract || '',
+        arxiv_id: panelPaper.arxiv_id || null,
         mode: 'full',
         source: 'search',
         summarySource: panelSummarySource,
