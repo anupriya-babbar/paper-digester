@@ -1,6 +1,65 @@
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
+const SELECT = 'title,authorships,publication_year,abstract_inverted_index,cited_by_count,locations,ids,topics';
+const MAILTO = 'mailto=anupriyababbar0110@gmail.com';
+const HEADERS = { 'User-Agent': 'PaperDigester/1.0' };
+
+/** Apply the arXiv post-filter and map raw OpenAlex works to our shape. */
+function parseResults(data) {
+  return (data.results || [])
+    .filter((p) =>
+      p.locations?.some((l) => l.landing_page_url?.includes('arxiv.org')) ||
+      p.ids?.arxiv
+    )
+    .map((p) => {
+      const arxivLocation = p.locations?.find((l) =>
+        l.landing_page_url?.includes('arxiv.org')
+      );
+      const arxivUrl =
+        arxivLocation?.landing_page_url || p.ids?.arxiv || '';
+      const arxivId = arxivUrl
+        .replace('https://arxiv.org/abs/', '')
+        .replace('http://arxiv.org/abs/', '')
+        .trim();
+
+      let abstract = '';
+      if (p.abstract_inverted_index) {
+        const words = {};
+        Object.entries(p.abstract_inverted_index).forEach(([word, positions]) => {
+          positions.forEach((pos) => { words[pos] = word; });
+        });
+        abstract = Object.keys(words)
+          .sort((a, b) => Number(a) - Number(b))
+          .map((k) => words[k])
+          .join(' ');
+      }
+
+      const authors = (p.authorships || [])
+        .slice(0, 3)
+        .map((a) => a.author?.display_name || '')
+        .filter(Boolean)
+        .join(', ');
+
+      const keywords = (p.topics || [])
+        .slice(0, 4)
+        .map((t) => t.display_name);
+
+      return {
+        title: p.title || '',
+        authors,
+        year: p.publication_year,
+        venue: '',
+        abstract,
+        arxiv_id: arxivId,
+        citationCount: p.cited_by_count || 0,
+        publicationDate: p.publication_year ? `${p.publication_year}-01-01` : null,
+        keywords,
+      };
+    })
+    .filter((p) => p.arxiv_id && p.title);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -9,81 +68,119 @@ export default async function handler(req, res) {
   const { query } = req.query;
   if (!query) return res.status(400).json({ error: 'query required' });
 
-  try {
-    const url =
+  // Detect arXiv ID pattern: digits.digits (e.g. 1706.03762 or 2301.07041)
+  const arxivIdPattern = /^\d{4}\.\d{4,5}(v\d+)?$/;
+  if (arxivIdPattern.test(query.trim())) {
+    const arxivId = query.trim().replace(/v\d+$/, ''); // strip version
+
+    // Fetch directly from OpenAlex using arXiv ID filter
+    const arxivUrl =
       `https://api.openalex.org/works` +
-      `?search=${encodeURIComponent(query)}` +
-      `&filter=open_access.is_oa:true` +
-      `&per_page=10` +
-      `&select=title,authorships,publication_year,` +
-      `abstract_inverted_index,cited_by_count,` +
-      `locations,ids,topics` +
-      `&mailto=anupriyababbar0110@gmail.com`;
+      `?filter=ids.arxiv:${arxivId}` +
+      `&select=${SELECT}` +
+      `&${MAILTO}`;
 
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'PaperDigester/1.0' },
-    });
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: `Search failed: ${response.status}`,
-      });
+    try {
+      const arxivRes = await fetch(arxivUrl, { headers: HEADERS });
+      if (arxivRes.ok) {
+        const arxivData = await arxivRes.json();
+        const results = parseResults(arxivData);
+        if (results.length > 0) {
+          console.log('[search] strategy used: arxiv-id, results:', results.length);
+          return res.status(200).json({ data: results });
+        }
+      }
+    } catch (e) {
+      console.warn('[search] arxiv-id OpenAlex lookup failed:', e.message);
     }
 
-    const data = await response.json();
+    // Fallback: fetch metadata directly from arXiv API
+    const arXivApiUrl =
+      `https://export.arxiv.org/api/query?id_list=${arxivId}&max_results=1`;
 
-    const papers = (data.results || [])
-      .filter((p) =>
-        p.locations?.some((l) => l.landing_page_url?.includes('arxiv.org')) ||
-        p.ids?.arxiv
-      )
-      .slice(0, 6)
-      .map((p) => {
-        const arxivLocation = p.locations?.find((l) =>
-          l.landing_page_url?.includes('arxiv.org')
-        );
-        const arxivUrl =
-          arxivLocation?.landing_page_url || p.ids?.arxiv || '';
-        const arxivId = arxivUrl
-          .replace('https://arxiv.org/abs/', '')
-          .replace('http://arxiv.org/abs/', '')
-          .trim();
+    const arXivRes = await fetch(arXivApiUrl, { headers: HEADERS });
+    if (arXivRes.ok) {
+      const xml = await arXivRes.text();
 
-        let abstract = '';
-        if (p.abstract_inverted_index) {
-          const words = {};
-          Object.entries(p.abstract_inverted_index).forEach(([word, positions]) => {
-            positions.forEach((pos) => { words[pos] = word; });
-          });
-          abstract = Object.keys(words)
-            .sort((a, b) => Number(a) - Number(b))
-            .map((k) => words[k])
-            .join(' ');
-        }
+      const titleMatch = xml.match(/<title>([\s\S]*?)<\/title>/g);
+      const title = titleMatch?.[1]
+        ?.replace(/<title>|<\/title>/g, '')
+        ?.trim() || '';
 
-        const authors = (p.authorships || [])
-          .slice(0, 3)
-          .map((a) => a.author?.display_name || '')
-          .filter(Boolean)
-          .join(', ');
+      const abstractMatch = xml.match(/<summary>([\s\S]*?)<\/summary>/);
+      const abstract = abstractMatch?.[1]?.trim() || '';
 
-        const keywords = (p.topics || [])
-          .slice(0, 4)
-          .map((t) => t.display_name);
+      const authorMatches = [...xml.matchAll(/<name>(.*?)<\/name>/g)];
+      const authors = authorMatches.slice(0, 3).map(m => m[1]).join(', ');
 
-        return {
-          title: p.title || '',
-          authors,
-          year: p.publication_year,
-          venue: '',
-          abstract,
-          arxiv_id: arxivId,
-          citationCount: p.cited_by_count || 0,
-          publicationDate: p.publication_year ? `${p.publication_year}-01-01` : null,
-          keywords,
-        };
-      })
-      .filter((p) => p.arxiv_id && p.title);
+      const dateMatch = xml.match(/<published>(.*?)<\/published>/);
+      const year = dateMatch?.[1]?.slice(0, 4) || '';
+
+      if (title) {
+        console.log('[search] strategy used: arxiv-api-direct');
+        return res.status(200).json({
+          data: [{
+            title,
+            abstract,
+            authors,
+            year: parseInt(year),
+            arxiv_id: arxivId,
+            citationCount: 0,
+            keywords: [],
+            publicationDate: year,
+            venue: 'arXiv',
+          }],
+        });
+      }
+    }
+
+    return res.status(200).json({
+      data: [],
+      message: 'Paper not found on arXiv. Please check the ID and try again.',
+    });
+  }
+
+  try {
+    // STEP 1 — Title search (relevance-ranked)
+    const titleUrl =
+      `https://api.openalex.org/works` +
+      `?filter=title.search:${encodeURIComponent(query)},open_access.is_oa:true` +
+      `&per_page=25` +
+      `&sort=relevance_score:desc` +
+      `&select=${SELECT}` +
+      `&${MAILTO}`;
+
+    const titleRes = await fetch(titleUrl, { headers: HEADERS });
+    const titleResults = titleRes.ok ? parseResults(await titleRes.json()) : [];
+
+    // STEP 2 — Keyword fallback when title search yields fewer than 3 arXiv results
+    let kwResults = [];
+    if (titleResults.length < 3) {
+      const kwUrl =
+        `https://api.openalex.org/works` +
+        `?search=${encodeURIComponent(query)}` +
+        `&filter=open_access.is_oa:true` +
+        `&per_page=25` +
+        `&sort=relevance_score:desc` +
+        `&select=${SELECT}` +
+        `&${MAILTO}`;
+
+      const kwRes = await fetch(kwUrl, { headers: HEADERS });
+      kwResults = kwRes.ok ? parseResults(await kwRes.json()) : [];
+    }
+
+    // Combine, deduplicate by arxiv_id
+    const seen = new Set();
+    const combined = [...titleResults, ...kwResults].filter((p) => {
+      if (seen.has(p.arxiv_id)) return false;
+      seen.add(p.arxiv_id);
+      return true;
+    });
+
+    const strategy = kwResults.length > 0 ? 'keyword' : 'title';
+    console.log('[search] strategy used:', strategy, 'results:', combined.length);
+
+    const papers = combined.slice(0, 6);
 
     if (papers.length === 0) {
       return res.status(200).json({

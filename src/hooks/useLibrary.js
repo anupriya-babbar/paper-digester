@@ -78,7 +78,9 @@ export function useLibrary(userId) {
         tldr: paperWithoutId.tldr || null,
         concept: paperWithoutId.concept || null,
         oneliner: paperWithoutId.oneliner || null,
-        findings: paperWithoutId.findings || null,
+        findings: Array.isArray(paperWithoutId.mechanics)
+          ? paperWithoutId.mechanics.map(m => m.name + ': ' + m.explanation).join('\n')
+          : paperWithoutId.findings || null,
         key_advantage: paperWithoutId.keyAdvantage || paperWithoutId.key_advantage || null,
         results: paperWithoutId.results || null,
         figures: paperWithoutId.figures || null,
