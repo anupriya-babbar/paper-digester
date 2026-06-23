@@ -98,7 +98,7 @@ export function useEval() {
 
   // ── SUMMARY EVAL ──────────────────────────
 
-  const runSummaryEval = useCallback(async (paper, userId) => {
+  const runSummaryEval = useCallback(async (paper, userId, fullText = '') => {
     console.log('[useEval] runSummaryEval called', {
       paperId: paper?.id,
       mode: paper?.mode,
@@ -126,7 +126,7 @@ export function useEval() {
         ? callJudge('faithfulness', faithfulnessPrompt(abstract, summaryText))
         : Promise.resolve(null),
       hasAbstract
-        ? callJudge('coverage', coveragePrompt(abstract, summaryText))
+        ? callJudge('coverage', coveragePrompt(abstract, summaryText, fullText))
         : Promise.resolve(null),
       summaryText
         ? callJudge('modeFidelity', modeFidelityPrompt(mode, summaryText))
@@ -217,7 +217,7 @@ export function useEval() {
 
     // Build paper lookup: 1-based index → paper object (matching chain.paper_ids order)
     const paperLookup = {};
-    (chain.paper_ids || []).forEach((id, idx) => {
+    (chain.paper_ids || chain.paperIds || []).forEach((id, idx) => {
       const paper = papers.find(p => p.id === id);
       if (paper) paperLookup[idx + 1] = paper;
     });
@@ -228,6 +228,9 @@ export function useEval() {
 
     // ── Citation Grounding ─────────────────
     // Extract claim+chip pairs from evolution + agreements (most cited sections)
+    console.log('[chainEval] synthesis keys:', Object.keys(synthesis));
+    console.log('[chainEval] evolution:', synthesis.evolution?.slice(0, 200));
+    console.log('[chainEval] agreements:', synthesis.agreements?.slice(0, 200));
     const rawClaims = [
       ...extractCitationClaims(synthesis.evolution || ''),
       ...extractCitationClaims(synthesis.agreements || ''),
@@ -238,6 +241,11 @@ export function useEval() {
     const citationClaims = rawClaims
       .filter(c => { const k = c.claim; return seen.has(k) ? false : seen.add(k); })
       .slice(0, 5);
+
+    console.log('[chainEval] rawClaims count:', rawClaims.length);
+    console.log('[chainEval] citationClaims after dedup:', citationClaims.length);
+    console.log('[chainEval] citationClaims detail:', JSON.stringify(citationClaims.slice(0, 3)));
+    console.log('[chainEval] paperLookup keys:', Object.keys(paperLookup));
 
     const citationResults = await Promise.all(
       citationClaims.map(({ paperNum, year, claim }) => {
@@ -256,6 +264,8 @@ export function useEval() {
 
     // ── Contradiction Reality ──────────────
     const contradictionPairs = extractContradictionPairs(synthesis.contradictions || '').slice(0, 3);
+    console.log('[chainEval] contradictions text:', synthesis.contradictions?.slice(0, 300));
+    console.log('[chainEval] contradiction pairs found:', contradictionPairs.length);
 
     const contradictionResults = await Promise.all(
       contradictionPairs.map(({ text, papers: chipPapers }) => {

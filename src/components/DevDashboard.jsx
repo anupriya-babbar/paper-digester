@@ -149,7 +149,15 @@ export default function DevDashboard({ library, chains, userId }) {
     setEvalRunning(true);
     setSummaryEvalResult(null);
     try {
-      const results = await runSummaryEval(paper, userId);
+      const fullText = [
+        selectedPaper?.concept,
+        selectedPaper?.findings,
+        selectedPaper?.key_advantage,
+        selectedPaper?.results,
+        selectedPaper?.figures,
+      ].filter(Boolean).join('\n\n');
+
+      const results = await runSummaryEval(paper, userId, fullText);
       setSummaryEvalResult(results);
       setTimeout(() => setEvalCount(prev => prev + 1), 1000);
     } finally {
@@ -159,10 +167,22 @@ export default function DevDashboard({ library, chains, userId }) {
 
   const handleRunChainEval = async (chain) => {
     console.log('[ChainEval] running with chain:', chain?.id, chain?.name, 'paper_ids:', chain?.paper_ids?.length);
+    console.log('[ChainEval] full chain object keys:', Object.keys(selectedChain));
+    console.log('[ChainEval] paper_ids:', selectedChain?.paper_ids);
+    console.log('[ChainEval] paperIds:', selectedChain?.paperIds);
     if (!chain?.id) return;
     setEvalRunning(true);
     setChainEvalResult(null);
     try {
+      console.log('[ChainEval] papers array length:', library?.length);
+      console.log('[ChainEval] papers ids:', library?.map(p => p.id));
+      console.log('[ChainEval] chain paperIds:', selectedChain?.paperIds);
+
+      const found = (selectedChain?.paperIds || []).filter(id =>
+        library?.some(p => p.id === id)
+      );
+      console.log('[ChainEval] matched papers:', found.length, 'of', selectedChain?.paperIds?.length);
+
       const results = await runChainEval(chain, library, userId);
       setChainEvalResult(results);
       setTimeout(() => setEvalCount(prev => prev + 1), 1000);

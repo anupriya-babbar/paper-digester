@@ -96,6 +96,8 @@ export function citationDensity(chainText) {
  * Returns deduplicated list so the same chip in different sentences is preserved.
  */
 export function extractCitationClaims(text) {
+  console.log('[freeChecks] extractCitationClaims input length:', text?.length);
+  console.log('[freeChecks] first 200 chars:', text?.slice(0, 200));
   if (!text) return [];
   const chipRegex = /\[P(\d+):\s*(\d{4})\]/g;
   const claims = [];
@@ -104,14 +106,18 @@ export function extractCitationClaims(text) {
   const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
 
   for (const sentence of sentences) {
-    let match;
-    chipRegex.lastIndex = 0;
-    while ((match = chipRegex.exec(sentence)) !== null) {
+    const chips = [...sentence.matchAll(/(?:\[P(\d+):\s*(\d{4})\]|P(\d+)\s*\[(\d{4})\])/g)]
+      .map(m => ({
+        num: parseInt(m[1] || m[3], 10),
+        year: m[2] || m[4],
+        chip: m[0],
+      }));
+    for (const chip of chips) {
       claims.push({
-        paperNum: parseInt(match[1], 10),
-        year: match[2],
+        paperNum: chip.num,
+        year: chip.year,
         claim: sentence.trim(),
-        chip: match[0],
+        chip: chip.chip,
       });
     }
   }
@@ -129,10 +135,11 @@ export function extractContradictionPairs(contradictionsText) {
 
   return sentences
     .map(s => {
-      const chips = [...s.matchAll(/\[P(\d+):\s*(\d{4})\]/g)];
+      const chips = [...s.matchAll(/(?:\[P(\d+):\s*(\d{4})\]|P(\d+)\s*\[(\d{4})\])/g)]
+        .map(m => ({ num: parseInt(m[1] || m[3], 10), year: m[2] || m[4] }));
       return {
         text: s.trim(),
-        papers: chips.map(m => ({ num: parseInt(m[1], 10), year: m[2] })),
+        papers: chips,
       };
     })
     .filter(item => item.papers.length >= 2);

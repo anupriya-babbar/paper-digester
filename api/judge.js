@@ -1,3 +1,6 @@
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 // api/judge.js — Redesigned judge endpoint
 // Replaces the old YES/NO single-prompt judge
 // Accepts: { evalType, payload: { prompt } }

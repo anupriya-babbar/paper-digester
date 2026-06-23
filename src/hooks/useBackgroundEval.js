@@ -14,14 +14,14 @@ import { useEval } from './useEval';
 export function useBackgroundEval(userId) {
   const { runSummaryEval } = useEval();
 
-  const triggerBackgroundEval = useCallback(async (paper) => {
+  const triggerBackgroundEval = useCallback(async (paper, fullText = '') => {
     if (!paper?.id) return;
 
     // Small delay so we don't compete with the summary save write
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     try {
-      const results = await runSummaryEval(paper, userId);
+      const results = await runSummaryEval(paper, userId, fullText);
 
       if (results) {
         // Notify any listening component (e.g. sidebar badge, paper card)

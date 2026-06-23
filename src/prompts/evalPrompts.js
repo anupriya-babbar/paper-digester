@@ -26,6 +26,11 @@ Rules:
 - Ignore general framing sentences (e.g. "this paper presents...")
 - Flag specific factual claims: numbers, method names, results, conclusions
 - If no issues exist, return an empty array
+- Acceptable: technical details explained in simpler terms
+- Acceptable: implications strongly supported by the abstract stated as conclusions
+- Acceptable: minor rewordings that preserve meaning
+- Flag ONLY: wrong numbers, invented specific claims, direct contradictions, or claims with absolutely no basis in the abstract
+- Do NOT flag elaborations or explanations of concepts that are mentioned in the abstract
 
 Return ONLY valid JSON:
 {
@@ -40,28 +45,40 @@ Scoring: start at 100, subtract 20 for each issue found, minimum 0. Empty issues
  * Coverage — does the summary capture the paper's main contribution?
  * Requires abstract as ground truth. Returns mainContribution and covered bool.
  */
-export function coveragePrompt(abstract, summaryText) {
+export function coveragePrompt(abstract, summaryText, fullText = '') {
   return `You are checking whether an AI summary captures the core contribution of a paper.
 
 ORIGINAL ABSTRACT:
 ${abstract}
 
+${fullText ? `ADDITIONAL PAPER CONTEXT (introduction, methods, results):
+${fullText.slice(0, 2000)}` : ''}
+
 AI-GENERATED SUMMARY:
 ${summaryText}
 
 Task:
-1. State the single most important contribution claimed in the abstract — in one sentence.
-2. Is that specific contribution clearly present in the summary?
+1. State the single most important contribution from the abstract.
+2. Check if the summary covers ALL FOUR of these dimensions:
+   - Main contribution (what the paper proposes)
+   - At least one concrete result or number
+   - The method or mechanism (how it works)
+   - Scope or limitations
+3. Is the main contribution clearly present in the summary?
 
 Return ONLY valid JSON:
 {
-  "mainContribution": "one sentence stating the key contribution from the abstract",
+  "mainContribution": "one sentence",
+  "coversContribution": true,
+  "coversResults": true,
+  "coversMechanism": true,
+  "coversScope": true,
   "covered": true,
-  "reason": "brief specific reason why it is or isn't covered",
-  "score": 100
+  "reason": "brief explanation",
+  "score": 85
 }
 
-score: 100 if covered is true, 0 if covered is false.`;
+score: coversContribution(40pts) + coversResults(20pts) + coversMechanism(20pts) + coversScope(20pts)`;
 }
 
 /**
