@@ -47,7 +47,11 @@ export function numberPreservation(abstract, summaryText) {
  * Only meaningful for tldr mode.
  */
 export function lengthSanity(mode, summaryText, abstractText) {
-  if (mode !== 'tldr' || !summaryText || !abstractText) return null;
+  if (mode !== 'tldr' || !summaryText || !abstractText) {
+    return mode !== 'tldr'
+      ? { score: null, reason: 'Only applies to TL;DR mode' }
+      : null;
+  }
   const summaryWords = summaryText.trim().split(/\s+/).length;
   const abstractWords = abstractText.trim().split(/\s+/).length;
   const passes = summaryWords < abstractWords;

@@ -101,11 +101,19 @@ export default function DevDashboard({ library, chains, userId }) {
 
   useEffect(() => {
     if (!userId) return;
-    setOverviewLoading(true);
-    getAllEvalResults(userId).then(records => {
-      setOverviewStats(computeOverviewStats(records));
-      setOverviewLoading(false);
-    });
+
+    const timer = setTimeout(() => {
+      setOverviewLoading(true);
+      getAllEvalResults(userId).then(records => {
+        console.log('[Overview] records fetched:', records.length);
+        console.log('[Overview] summary records:', records.filter(r => r.eval_type === 'summary').length);
+        console.log('[Overview] eval types:', records.map(r => r.eval_type));
+        setOverviewStats(computeOverviewStats(records));
+        setOverviewLoading(false);
+      });
+    }, 1500);
+
+    return () => clearTimeout(timer);
   }, [userId, evalCount]);
 
   async function patchDemoAbstracts() {
@@ -159,7 +167,7 @@ export default function DevDashboard({ library, chains, userId }) {
 
       const results = await runSummaryEval(paper, userId, fullText);
       setSummaryEvalResult(results);
-      setTimeout(() => setEvalCount(prev => prev + 1), 1000);
+      setTimeout(() => setEvalCount(prev => prev + 1), 3000);
     } finally {
       setEvalRunning(false);
     }
@@ -185,7 +193,7 @@ export default function DevDashboard({ library, chains, userId }) {
 
       const results = await runChainEval(chain, library, userId);
       setChainEvalResult(results);
-      setTimeout(() => setEvalCount(prev => prev + 1), 1000);
+      setTimeout(() => setEvalCount(prev => prev + 1), 3000);
     } finally {
       setEvalRunning(false);
     }
@@ -281,6 +289,7 @@ export default function DevDashboard({ library, chains, userId }) {
                     {overviewStats.summaryCount} papers evaluated
                   </div>
                   <EvalBar label="Overall" score={overviewStats.summary?.overall} />
+                  <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
                   <EvalBar label="Faithfulness" score={overviewStats.summary?.faithfulness} />
                   <EvalBar label="Coverage" score={overviewStats.summary?.coverage} />
                   <EvalBar label="Mode Fidelity" score={overviewStats.summary?.modeFidelity} />
@@ -293,6 +302,7 @@ export default function DevDashboard({ library, chains, userId }) {
                     {overviewStats.chainCount} chains evaluated
                   </div>
                   <EvalBar label="Overall" score={overviewStats.chain?.overall} />
+                  <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
                   <EvalBar label="Citation Grounding" score={overviewStats.chain?.citationGrounding} />
                   <EvalBar label="Contradiction Reality" score={overviewStats.chain?.contradictionReality} />
                   <EvalBar label="Gap Novelty" score={overviewStats.chain?.gapNovelty} />
@@ -400,9 +410,23 @@ export default function DevDashboard({ library, chains, userId }) {
                 Free Checks
               </div>
               {console.log('[Dashboard] summaryEvalResult:', JSON.stringify(summaryEvalResult?.freeChecks))}
-              <EvalBar label="Keyword Coverage" score={summaryEvalResult.freeChecks?.keywordCoverage?.score} />
-              <EvalBar label="Number Preservation" score={summaryEvalResult.freeChecks?.numberPreservation?.score} />
-              <EvalBar label="Length Sanity" score={summaryEvalResult.freeChecks?.lengthSanity?.score} />
+              <EvalBar
+                label="Keyword Coverage"
+                score={summaryEvalResult.freeChecks?.keywordCoverage?.score}
+                naReason="No keywords stored for this paper"
+              />
+              <EvalBar
+                label="Number Preservation"
+                score={summaryEvalResult.freeChecks?.numberPreservation?.score}
+                naReason={summaryEvalResult.freeChecks?.numberPreservation?.reason
+                  || 'No significant numbers in abstract'}
+              />
+              <EvalBar
+                label="Length Sanity"
+                score={summaryEvalResult.freeChecks?.lengthSanity?.score}
+                naReason={summaryEvalResult.freeChecks?.lengthSanity?.reason
+                  || 'Only applies to TL;DR mode'}
+              />
 
               {summaryEvalResult.faithfulnessIssues?.length > 0 && (
                 <div style={{ marginTop: 12 }}>
@@ -530,7 +554,7 @@ export default function DevDashboard({ library, chains, userId }) {
   );
 }
 
-function EvalBar({ label, score, note }) {
+function EvalBar({ label, score, note, naReason }) {
   const isNull = score === null || score === undefined || isNaN(score);
   const color = isNull ? '#ccc'
     : score >= 80 ? '#22c55e'
@@ -545,7 +569,14 @@ function EvalBar({ label, score, note }) {
         <div style={{ width: isNull ? 0 : score + '%', background: color,
           height: '100%', transition: 'width 0.4s' }} />
       </div>
-      {note && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{note}</div>}
+      {isNull && naReason && (
+        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, fontStyle: 'italic' }}>
+          {naReason}
+        </div>
+      )}
+      {note && !isNull && (
+        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{note}</div>
+      )}
     </div>
   );
 }

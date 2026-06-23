@@ -33,14 +33,12 @@ export async function saveEvalResult(userId, evalType, targetId, targetTitle, re
   };
 
   try {
-    // Delete existing record first (avoids needing a DB unique constraint)
-    await supabase
-      .from('eval_results')
-      .delete()
-      .match({ user_id: userId, eval_type: evalType, target_id: targetId });
-
     const { error } = await supabase.from('eval_results').insert(payload);
-    if (error) throw error;
+    if (error) {
+      console.error('[evalStorage] INSERT failed:', error.message, error.details, error.hint);
+      throw error;
+    }
+    console.log('[evalStorage] INSERT success for:', evalType, targetId);
 
     return { success: true, storage: 'supabase' };
   } catch (err) {
