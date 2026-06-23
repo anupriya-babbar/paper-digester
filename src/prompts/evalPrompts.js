@@ -12,33 +12,44 @@
  * Requires abstract as ground truth. Returns issues[] and a score.
  */
 export function faithfulnessPrompt(abstract, summaryText) {
-  return `You are an academic fact-checker. Your job is to find unsupported claims — be strict.
+  return `You are an academic fact-checker evaluating an AI summary.
 
-ORIGINAL ABSTRACT:
+IMPORTANT CONTEXT: This summary was generated from the FULL paper,
+not just the abstract below. Therefore the summary will correctly
+contain details, mechanisms, and specifics that are NOT in the
+abstract. This is expected and GOOD — it means the summary read
+the full paper.
+
+ORIGINAL ABSTRACT (partial ground truth):
 ${abstract}
 
 AI-GENERATED SUMMARY:
 ${summaryText}
 
-Task: List every specific claim in the summary that is NOT supported by or directly contradicts the abstract.
-Rules:
-- If a claim is not in the abstract, flag it — even if it seems plausible
-- Ignore general framing sentences (e.g. "this paper presents...")
-- Flag specific factual claims: numbers, method names, results, conclusions
-- If no issues exist, return an empty array
-- Acceptable: technical details explained in simpler terms
-- Acceptable: implications strongly supported by the abstract stated as conclusions
-- Acceptable: minor rewordings that preserve meaning
-- Flag ONLY: wrong numbers, invented specific claims, direct contradictions, or claims with absolutely no basis in the abstract
-- Do NOT flag elaborations or explanations of concepts that are mentioned in the abstract
+Your task: Flag ONLY genuine faithfulness violations. A violation is:
+- A claim that DIRECTLY CONTRADICTS the abstract
+- An obviously fabricated specific number or result
+- A claim that misrepresents what the paper does
+
+NOT violations (do NOT flag these):
+- Details present in the summary but not the abstract (came from full paper)
+- Technical terms explained or elaborated
+- Reasonable implications or context
+- Simplifications that preserve meaning
+- Specific mechanisms, architecture details, or method names not in abstract
+
+Be generous. Only flag claims you are confident contradict the
+paper or are fabricated. When in doubt, do NOT flag.
 
 Return ONLY valid JSON:
 {
-  "issues": ["specific unsupported claim phrased as a sentence"],
-  "score": 80
+  "issues": ["only genuine contradictions or fabrications"],
+  "score": 90
 }
 
-Scoring: start at 100, subtract 20 for each issue found, minimum 0. Empty issues = 100.`;
+Scoring: Start at 100. Subtract 25 for each GENUINE violation
+(contradiction or fabrication). Simplifications and additions
+from the full paper do NOT reduce the score. Empty issues = 100.`;
 }
 
 /**

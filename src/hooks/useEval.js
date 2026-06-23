@@ -159,20 +159,30 @@ export function useEval() {
     const freeScore = aggregateFreeChecks(freeChecks);
 
     // Combined overall: LLM dims 70%, free checks 30%
-    const llmScore = safeAvg([
-      faithfulness?.score ?? null,
-      coverage?.score ?? null,
-      modeFidelity?.score ?? null,
-    ]);
+    const summaryWeights = {
+      faithfulness: 0.40,
+      coverage: 0.35,
+      modeFidelity: 0.15,
+      freeScore: 0.10,
+    };
 
-    let overall = null;
-    if (llmScore !== null && freeScore !== null) {
-      overall = Math.round(llmScore * 0.7 + freeScore * 0.3);
-    } else if (llmScore !== null) {
-      overall = llmScore;
-    } else if (freeScore !== null) {
-      overall = freeScore;
+    const summaryDimensions = {
+      faithfulness: faithfulness?.score ?? null,
+      coverage: coverage?.score ?? null,
+      modeFidelity: modeFidelity?.score ?? null,
+      freeScore: freeScore,
+    };
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+    for (const [key, weight] of Object.entries(summaryWeights)) {
+      const score = summaryDimensions[key];
+      if (score !== null && score !== undefined && !isNaN(score)) {
+        weightedSum += score * weight;
+        totalWeight += weight;
+      }
     }
+    const overall = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : null;
 
     console.log('[useEval] freeChecks detail:',
       JSON.stringify(freeChecks, null, 2));
@@ -317,7 +327,32 @@ export function useEval() {
     const densityScore = safeAvg([evolutionDensity?.score, agreementsDensity?.score]);
 
     // ── Overall ────────────────────────────
-    const overall = safeAvg([citationScore, contradictionScore, gapScore, synthesisScore]);
+    const chainWeights = {
+      citationGrounding: 0.30,
+      synthesisQuality: 0.25,
+      gapNovelty: 0.20,
+      contradictionReality: 0.15,
+      citationDensity: 0.10,
+    };
+
+    const chainDimensions = {
+      citationGrounding: citationScore,
+      synthesisQuality: synthesisScore,
+      gapNovelty: gapScore,
+      contradictionReality: contradictionScore,
+      citationDensity: densityScore,
+    };
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+    for (const [key, weight] of Object.entries(chainWeights)) {
+      const score = chainDimensions[key];
+      if (score !== null && score !== undefined && !isNaN(score)) {
+        weightedSum += score * weight;
+        totalWeight += weight;
+      }
+    }
+    const overall = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : null;
 
     const results = {
       overall,

@@ -87,19 +87,6 @@ export default function DevDashboard({ library, chains, userId }) {
   }, [userId]);
 
   useEffect(() => {
-    async function cleanOldEvals() {
-      await supabase
-        .from('eval_results')
-        .delete()
-        .eq('user_id', userId)
-        .eq('eval_type', 'summary')
-        .is('results->scores', null);
-      console.log('Old evals cleaned');
-    }
-    if (userId) cleanOldEvals();
-  }, [userId]);
-
-  useEffect(() => {
     if (!userId) return;
 
     const timer = setTimeout(() => {
@@ -288,7 +275,13 @@ export default function DevDashboard({ library, chains, userId }) {
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
                     {overviewStats.summaryCount} papers evaluated
                   </div>
-                  <EvalBar label="Overall" score={overviewStats.summary?.overall} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <ScoreCircle score={overviewStats.summary?.overall} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>Overall</div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>weighted average</div>
+                    </div>
+                  </div>
                   <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
                   <EvalBar label="Faithfulness" score={overviewStats.summary?.faithfulness} />
                   <EvalBar label="Coverage" score={overviewStats.summary?.coverage} />
@@ -301,7 +294,13 @@ export default function DevDashboard({ library, chains, userId }) {
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
                     {overviewStats.chainCount} chains evaluated
                   </div>
-                  <EvalBar label="Overall" score={overviewStats.chain?.overall} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <ScoreCircle score={overviewStats.chain?.overall} />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>Overall</div>
+                      <div style={{ fontSize: 11, color: '#6b7280' }}>weighted average</div>
+                    </div>
+                  </div>
                   <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
                   <EvalBar label="Citation Grounding" score={overviewStats.chain?.citationGrounding} />
                   <EvalBar label="Contradiction Reality" score={overviewStats.chain?.contradictionReality} />
