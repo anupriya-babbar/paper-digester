@@ -283,10 +283,18 @@ export default function DevDashboard({ library, chains, userId }) {
                     </div>
                   </div>
                   <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
-                  <EvalBar label="Faithfulness" score={overviewStats.summary?.faithfulness} />
-                  <EvalBar label="Coverage" score={overviewStats.summary?.coverage} />
-                  <EvalBar label="Mode Fidelity" score={overviewStats.summary?.modeFidelity} />
-                  <EvalBar label="Free Checks" score={overviewStats.summary?.freeChecks} />
+                  {overviewStats.summary?.faithfulness !== null && overviewStats.summary?.faithfulness !== undefined && !isNaN(overviewStats.summary?.faithfulness) && (
+                    <EvalBar label="Faithfulness" score={overviewStats.summary.faithfulness} />
+                  )}
+                  {overviewStats.summary?.coverage !== null && overviewStats.summary?.coverage !== undefined && !isNaN(overviewStats.summary?.coverage) && (
+                    <EvalBar label="Coverage" score={overviewStats.summary.coverage} />
+                  )}
+                  {overviewStats.summary?.modeFidelity !== null && overviewStats.summary?.modeFidelity !== undefined && !isNaN(overviewStats.summary?.modeFidelity) && (
+                    <EvalBar label="Mode Fidelity" score={overviewStats.summary.modeFidelity} />
+                  )}
+                  {overviewStats.summary?.freeChecks !== null && overviewStats.summary?.freeChecks !== undefined && !isNaN(overviewStats.summary?.freeChecks) && (
+                    <EvalBar label="Free Checks" score={overviewStats.summary.freeChecks} />
+                  )}
                 </div>
                 {/* Chain Eval card */}
                 <div style={{ flex: 1, ...CARD, marginBottom: 0 }}>
@@ -302,11 +310,21 @@ export default function DevDashboard({ library, chains, userId }) {
                     </div>
                   </div>
                   <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '10px 0 12px 0' }} />
-                  <EvalBar label="Citation Grounding" score={overviewStats.chain?.citationGrounding} />
-                  <EvalBar label="Contradiction Reality" score={overviewStats.chain?.contradictionReality} />
-                  <EvalBar label="Gap Novelty" score={overviewStats.chain?.gapNovelty} />
-                  <EvalBar label="Synthesis Quality" score={overviewStats.chain?.synthesisQuality} />
-                  <EvalBar label="Citation Density" score={overviewStats.chain?.citationDensity} />
+                  {overviewStats.chain?.citationGrounding !== null && overviewStats.chain?.citationGrounding !== undefined && !isNaN(overviewStats.chain?.citationGrounding) && (
+                    <EvalBar label="Citation Grounding" score={overviewStats.chain.citationGrounding} />
+                  )}
+                  {overviewStats.chain?.contradictionReality !== null && overviewStats.chain?.contradictionReality !== undefined && !isNaN(overviewStats.chain?.contradictionReality) && (
+                    <EvalBar label="Contradiction Reality" score={overviewStats.chain.contradictionReality} />
+                  )}
+                  {overviewStats.chain?.gapNovelty !== null && overviewStats.chain?.gapNovelty !== undefined && !isNaN(overviewStats.chain?.gapNovelty) && (
+                    <EvalBar label="Gap Novelty" score={overviewStats.chain.gapNovelty} />
+                  )}
+                  {overviewStats.chain?.synthesisQuality !== null && overviewStats.chain?.synthesisQuality !== undefined && !isNaN(overviewStats.chain?.synthesisQuality) && (
+                    <EvalBar label="Synthesis Quality" score={overviewStats.chain.synthesisQuality} />
+                  )}
+                  {overviewStats.chain?.citationDensity !== null && overviewStats.chain?.citationDensity !== undefined && !isNaN(overviewStats.chain?.citationDensity) && (
+                    <EvalBar label="Citation Density" score={overviewStats.chain.citationDensity} />
+                  )}
                 </div>
               </div>
 
@@ -493,8 +511,10 @@ export default function DevDashboard({ library, chains, userId }) {
               <EvalBar
                 label="Contradiction Reality"
                 score={chainEvalResult.contradictionReality}
-                note={chainEvalResult.contradictionsChecked != null
-                  ? `${chainEvalResult.contradictionsChecked} contradictions checked` : undefined}
+                naReason={chainEvalResult.contradictionReason}
+                note={chainEvalResult.contradictionsChecked
+                  ? chainEvalResult.contradictionsChecked + ' contradictions checked'
+                  : null}
               />
               <EvalBar
                 label="Gap Novelty"

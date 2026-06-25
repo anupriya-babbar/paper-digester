@@ -235,6 +235,13 @@ Rules:
 - Different scope or context is NOT a contradiction unless they make competing claims
 - The disagreement must be evident from the summaries provided
 
+Note: A genuine contradiction exists when papers take opposing
+positions on the same point — even if one paper is simply
+superseded by another's approach (e.g. one assumes a technique
+is necessary, another proves it is not). Evolution that
+explicitly overturns a prior assumption counts as a real
+contradiction.
+
 Return ONLY valid JSON:
 {
   "valid": true,
@@ -292,19 +299,32 @@ ${allSummariesText}
 CROSS-PAPER KEY INSIGHT:
 "${keyInsight}"
 
-Does this key insight reveal something that is NOT already stated in any individual paper summary?
-Rules:
-- Genuine synthesis connects papers and reveals a pattern not visible from any one paper alone
-- Restating what one paper says, even in different words, is NOT synthesis
-- Aggregating two points from different papers into one sentence is NOT synthesis
-- Synthesis must reveal something only visible when all papers are considered together
+Does this key insight identify a pattern, throughline, or
+relationship that connects multiple papers — something more
+than restating one paper?
+
+GOOD synthesis (score high):
+- Identifies a single thread connecting multiple papers
+- Shows how developments build on or enable each other
+- Names a trend visible only across papers
+- Citing multiple papers while drawing one unified conclusion IS synthesis
+
+NOT synthesis (score low):
+- Only restates what ONE paper says
+- Lists papers separately with no connecting idea
+- "Paper A does X. Paper B does Y." with no link
+
+Be fair. If the insight draws a unified conclusion across
+papers — even while citing them — that IS synthesis and
+should score 75 or above.
 
 Return ONLY valid JSON:
 {
   "beyondIndividual": true,
-  "reason": "one specific sentence explaining what makes this genuine synthesis or why it falls short",
-  "score": 100
+  "reason": "one sentence on what thread it identifies or why it falls short",
+  "score": 80
 }
 
-score: 100 if genuinely synthesizes across papers, 0 if it restates individual paper content.`;
+score: 80-100 if it identifies a genuine cross-paper thread.
+50-75 if partial synthesis. 0-40 only if it just restates one paper.`;
 }

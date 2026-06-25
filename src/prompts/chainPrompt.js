@@ -38,7 +38,7 @@ Return EXACTLY this JSON structure (no extra fields):
   "keyInsight": "single most important takeaway across all papers, with citations [P1: year]",
   "evolution": "2-3 paragraph narrative of how ideas evolved. Cite every claim [P1: year]. Separate paragraphs with \\n\\n.",
   "agreements": "what the papers agree on, every claim cited [P1: year] [P2: year]",
-  "contradictions": "where papers disagree or differ in approach, every claim cited",
+  "contradictions": "A string describing ONLY genuine disagreements where two papers make OPPOSING claims about the SAME question — where one paper's finding would challenge or refute another's. Every claim must cite papers like [P1: 2017]. IMPORTANT: Differences in scope, domain, method, or era are NOT contradictions. Two papers studying different problems do not contradict — they simply differ. Only include a contradiction if the papers would actually disagree if asked the same question. If the papers do not genuinely contradict each other (e.g. they address different domains or build on each other without conflict), set this to: 'No direct contradictions — these papers address complementary or sequential aspects rather than opposing positions.'",
   "gaps": [
     {
       "gap": "specific unanswered research question",

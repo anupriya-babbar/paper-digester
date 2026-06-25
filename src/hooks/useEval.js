@@ -277,6 +277,10 @@ export function useEval() {
     console.log('[chainEval] contradictions text:', synthesis.contradictions?.slice(0, 300));
     console.log('[chainEval] contradiction pairs found:', contradictionPairs.length);
 
+    const noContradictions = !synthesis.contradictions
+      || synthesis.contradictions.trim().length < 20
+      || /no (direct |genuine )?contradiction/i.test(synthesis.contradictions);
+
     const contradictionResults = await Promise.all(
       contradictionPairs.map(({ text, papers: chipPapers }) => {
         if (chipPapers.length < 2) return Promise.resolve(null);
@@ -295,9 +299,21 @@ export function useEval() {
     );
 
     const validContradictions = contradictionResults.filter(r => r !== null);
-    const contradictionScore = validContradictions.length
-      ? Math.round(validContradictions.reduce((a, r) => a + (r.valid ? 100 : 0), 0) / validContradictions.length)
-      : null;
+
+    let contradictionScore = null;
+    let contradictionReason = null;
+
+    if (noContradictions) {
+      contradictionScore = null;
+      contradictionReason = 'No contradictions in synthesis — papers address complementary or unrelated aspects';
+    } else if (validContradictions.length > 0) {
+      contradictionScore = Math.round(
+        validContradictions.reduce((a, r) => a + (r.valid ? 100 : 0), 0) / validContradictions.length
+      );
+    } else {
+      contradictionScore = null;
+      contradictionReason = 'No paper pairs with shared citations found to validate';
+    }
 
     // ── Gap Novelty ────────────────────────
     const gaps = Array.isArray(synthesis.gaps) ? synthesis.gaps.slice(0, 3) : [];
@@ -364,6 +380,7 @@ export function useEval() {
       citationsChecked:      validCitations.length,
 
       contradictionReality:  contradictionScore,
+      contradictionReason:   contradictionReason,
       contradictionDetails:  validContradictions,
       contradictionsChecked: validContradictions.length,
 
