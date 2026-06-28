@@ -1,14 +1,20 @@
 import { useMemo } from 'react';
 
-function StatCard({ label, value, color = '#1B4F9C' }) {
+function StatCard({ label, value, icon }) {
   return (
     <div style={{
-      flex: '1 1 120px', padding: '14px 16px',
-      border: '0.5px solid #e0e3e8', borderRadius: 10,
+      flex: '1 1 120px', padding: '20px',
+      boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)',
       background: '#fff', minWidth: 0,
     }}>
-      <div style={{ fontSize: 26, fontWeight: 700, color }}>{value}</div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginTop: 2 }}>{label}</div>
+      <div style={{
+        width: 36, height: 36, borderRadius: 8,
+        background: 'var(--accent-tint)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 18, marginBottom: 12,
+      }}>{icon}</div>
+      <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--accent)' }}>{value}</div>
+      <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{label}</div>
     </div>
   );
 }
@@ -20,10 +26,10 @@ function YearBar({ year, count, max }) {
       <div style={{ fontSize: 11, color: '#6b7280', width: 36, textAlign: 'right', flexShrink: 0 }}>
         {year}
       </div>
-      <div style={{ flex: 1, height: 14, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 9, background: '#F1F5F9', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{
-          width: `${pct}%`, height: '100%', background: '#1B4F9C',
-          borderRadius: 4, transition: 'width 0.4s',
+          width: `${pct}%`, height: '100%', background: 'var(--accent)',
+          borderRadius: 6, transition: 'width 0.4s',
         }} />
       </div>
       <div style={{ fontSize: 11, color: '#6b7280', width: 16, flexShrink: 0 }}>{count}</div>
@@ -41,10 +47,10 @@ function TopicBar({ topic, count, max }) {
       }}>
         {topic}
       </div>
-      <div style={{ flex: 1, height: 14, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 9, background: '#F1F5F9', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{
           width: `${pct}%`, height: '100%', background: '#7C3AED',
-          borderRadius: 4, transition: 'width 0.4s',
+          borderRadius: 6, transition: 'width 0.4s',
         }} />
       </div>
       <div style={{ fontSize: 11, color: '#6b7280', width: 16, flexShrink: 0 }}>{count}</div>
@@ -119,57 +125,27 @@ export default function LibraryOverview({
   }
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 24px 60px' }}>
+    <div style={{ maxWidth: 920, margin: '0 auto', padding: '28px 24px 60px' }}>
 
       {/* Stats row */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
-        <StatCard label="Total papers" value={stats.total} />
-        <StatCard label="Chains built" value={stats.chains} color="#7C3AED" />
-        <StatCard label="Synthesized chains" value={stats.synthesized} color="#059669" />
-      </div>
-
-      {/* Charts row */}
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 28 }}>
-        {yearData.sorted.length > 0 && (
-          <div style={{
-            flex: '1 1 220px', padding: '16px 18px',
-            border: '0.5px solid #e0e3e8', borderRadius: 10, background: '#fff',
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-              Papers by Year
-            </div>
-            {yearData.sorted.map(([year, count]) => (
-              <YearBar key={year} year={year} count={count} max={yearData.max} />
-            ))}
-          </div>
-        )}
-
-        {topicData.sorted.length > 0 && (
-          <div style={{
-            flex: '1 1 220px', padding: '16px 18px',
-            border: '0.5px solid #e0e3e8', borderRadius: 10, background: '#fff',
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-              Top Topics
-            </div>
-            {topicData.sorted.map(([topic, count]) => (
-              <TopicBar key={topic} topic={topic} count={count} max={topicData.max} />
-            ))}
-          </div>
-        )}
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 32 }}>
+        <StatCard label="Total papers" value={stats.total} icon="📄" />
+        <StatCard label="Chains built" value={stats.chains} icon="🔗" />
+        <StatCard label="Synthesized chains" value={stats.synthesized} icon="✨" />
       </div>
 
       {/* Suggested reads */}
       {(suggestionsLoading || suggestions.length > 0) && (
         <div style={{
-          padding: '18px 20px',
-          border: '0.5px solid #e0e3e8', borderRadius: 10, background: '#fff',
+          padding: '24px',
+          boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
+          marginBottom: 24,
         }}>
           <div style={{
             display: 'flex', alignItems: 'center',
             justifyContent: 'space-between', marginBottom: 14,
           }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
               Suggested Reads
             </div>
             {onRefresh && (
@@ -178,7 +154,7 @@ export default function LibraryOverview({
                 disabled={suggestionsLoading}
                 style={{
                   background: 'transparent', border: 'none',
-                  color: '#1B4F9C', fontSize: 12, fontWeight: 500,
+                  color: 'var(--accent)', fontSize: 12, fontWeight: 500,
                   cursor: suggestionsLoading ? 'default' : 'pointer',
                 }}
               >
@@ -188,41 +164,45 @@ export default function LibraryOverview({
           </div>
 
           {suggestionsLoading && (
-            <div style={{ fontSize: 13, color: '#9ca3af', padding: '12px 0' }}>
+            <div style={{ fontSize: 13, color: 'var(--muted-light)', padding: '12px 0' }}>
               Finding papers tailored to your library…
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: 12,
+          }}>
             {suggestions.map((paper, i) => (
               <div
                 key={i}
                 style={{
-                  padding: '12px 14px', border: '0.5px solid #f3f4f6',
-                  borderRadius: 8, background: '#fafbfc',
+                  border: 'none', background: '#FAFBFC',
+                  borderRadius: 8, padding: '14px 16px',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.4, marginBottom: 4 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', lineHeight: 1.4, marginBottom: 4 }}>
                   {paper.title}
                 </div>
-                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted-light)', marginBottom: 8 }}>
                   {[
                     (paper.authors || []).slice(0, 2).map((a) => a.name || a).join(', '),
                     paper.year,
                   ].filter(Boolean).join(' · ')}
                 </div>
                 {paper.abstract && (
-                  <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6, marginBottom: 8 }}>
-                    {paper.abstract.slice(0, 200)}…
+                  <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 10 }}>
+                    {paper.abstract.slice(0, 140)}…
                   </p>
                 )}
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => onSummarize?.(paper)}
                     style={{
-                      padding: '4px 10px', fontSize: 11, fontWeight: 600,
-                      background: '#1B4F9C', color: '#fff',
-                      border: 'none', borderRadius: 5, cursor: 'pointer',
+                      padding: '6px 12px', fontSize: 12, fontWeight: 500,
+                      background: 'var(--accent)', color: '#fff',
+                      border: 'none', borderRadius: 6, cursor: 'pointer',
                     }}
                   >
                     ✦ Summarize
@@ -231,9 +211,9 @@ export default function LibraryOverview({
                     <button
                       onClick={() => onSaveToLibrary(paper)}
                       style={{
-                        padding: '4px 10px', fontSize: 11, fontWeight: 500,
-                        background: '#fff', color: '#374151',
-                        border: '0.5px solid #d1d5db', borderRadius: 5, cursor: 'pointer',
+                        padding: '6px 12px', fontSize: 12,
+                        background: 'var(--accent-tint)', color: 'var(--accent)',
+                        border: 'none', borderRadius: 6, cursor: 'pointer',
                       }}
                     >
                       + Save
@@ -245,6 +225,37 @@ export default function LibraryOverview({
           </div>
         </div>
       )}
+
+      {/* Charts row */}
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
+        {yearData.sorted.length > 0 && (
+          <div style={{
+            flex: '1 1 220px', padding: '20px',
+            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+              Papers by Year
+            </div>
+            {yearData.sorted.map(([year, count]) => (
+              <YearBar key={year} year={year} count={count} max={yearData.max} />
+            ))}
+          </div>
+        )}
+
+        {topicData.sorted.length > 0 && (
+          <div style={{
+            flex: '1 1 220px', padding: '20px',
+            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+              Top Topics
+            </div>
+            {topicData.sorted.map(([topic, count]) => (
+              <TopicBar key={topic} topic={topic} count={count} max={topicData.max} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
