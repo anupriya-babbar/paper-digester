@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 function StatCard({ label, value, icon }) {
   return (
@@ -67,6 +67,7 @@ export default function LibraryOverview({
   onSummarize,
   onSaveToLibrary,
   onRefresh,
+  signals = [],
 }) {
   const stats = useMemo(() => ({
     total: library.length,
@@ -100,6 +101,9 @@ export default function LibraryOverview({
     return { sorted, max };
   }, [library]);
 
+  const [showAllYears, setShowAllYears] = useState(false);
+  const yearsToShow = showAllYears ? yearData.sorted : yearData.sorted.slice(0, 6);
+
   if (library.length === 0) {
     return (
       <div style={{ maxWidth: 560, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
@@ -127,11 +131,63 @@ export default function LibraryOverview({
   return (
     <div style={{ maxWidth: 920, margin: '0 auto', padding: '28px 24px 60px' }}>
 
+      <div style={{ position: 'sticky', top: 0, zIndex: 10,
+        background: 'var(--bg)', paddingTop: 28, paddingBottom: 16,
+        marginBottom: 16 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)',
+          margin: 0, marginBottom: 4 }}>
+          Paper Digester
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
+          Your AI research synthesis library
+        </p>
+      </div>
+
       {/* Stats row */}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 32 }}>
         <StatCard label="Total papers" value={stats.total} icon="📄" />
         <StatCard label="Chains built" value={stats.chains} icon="🔗" />
         <StatCard label="Synthesized chains" value={stats.synthesized} icon="✨" />
+      </div>
+
+      {/* Charts row */}
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
+        {yearData.sorted.length > 0 && (
+          <div style={{
+            flex: '1 1 220px', padding: '20px',
+            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+              Papers by Year
+            </div>
+            {yearsToShow.map(([year, count]) => (
+              <YearBar key={year} year={year} count={count} max={yearData.max} />
+            ))}
+            {yearData.sorted.length > 6 && (
+              <div
+                onClick={() => setShowAllYears(!showAllYears)}
+                style={{ fontSize: 12, color: 'var(--accent)', cursor: 'pointer',
+                  marginTop: 8, textAlign: 'right' }}
+              >
+                {showAllYears ? 'Show less' : `+${yearData.sorted.length - 6} more years`}
+              </div>
+            )}
+          </div>
+        )}
+
+        {topicData.sorted.length > 0 && (
+          <div style={{
+            flex: '1 1 220px', padding: '20px',
+            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+              Top Topics
+            </div>
+            {topicData.sorted.slice(0, 6).map(([topic, count]) => (
+              <TopicBar key={topic} topic={topic} count={count} max={topicData.max} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Suggested reads */}
@@ -171,18 +227,20 @@ export default function LibraryOverview({
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: 12,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 10,
           }}>
             {suggestions.map((paper, i) => (
               <div
                 key={i}
                 style={{
                   border: 'none', background: '#FAFBFC',
-                  borderRadius: 8, padding: '14px 16px',
+                  borderRadius: 8, padding: '12px 14px',
+                  minHeight: 160, display: 'flex', flexDirection: 'column',
+                  justifyContent: 'space-between',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', lineHeight: 1.4, marginBottom: 4 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', lineHeight: 1.4, marginBottom: 4 }}>
                   {paper.title}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--muted-light)', marginBottom: 8 }}>
@@ -193,7 +251,7 @@ export default function LibraryOverview({
                 </div>
                 {paper.abstract && (
                   <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 10 }}>
-                    {paper.abstract.slice(0, 140)}…
+                    {paper.abstract.slice(0, 100)}…
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -225,37 +283,6 @@ export default function LibraryOverview({
           </div>
         </div>
       )}
-
-      {/* Charts row */}
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 28 }}>
-        {yearData.sorted.length > 0 && (
-          <div style={{
-            flex: '1 1 220px', padding: '20px',
-            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-              Papers by Year
-            </div>
-            {yearData.sorted.map(([year, count]) => (
-              <YearBar key={year} year={year} count={count} max={yearData.max} />
-            ))}
-          </div>
-        )}
-
-        {topicData.sorted.length > 0 && (
-          <div style={{
-            flex: '1 1 220px', padding: '20px',
-            boxShadow: 'var(--shadow)', borderRadius: 'var(--radius)', background: '#fff',
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-              Top Topics
-            </div>
-            {topicData.sorted.map(([topic, count]) => (
-              <TopicBar key={topic} topic={topic} count={count} max={topicData.max} />
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

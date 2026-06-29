@@ -54,8 +54,8 @@ export function useSuggestions(userId, library, chains) {
 
     if (cached) {
       const hoursAgo = (Date.now() - new Date(cached.generated_at)) / (1000 * 60 * 60);
-      if (hoursAgo < 24) {
-        setSuggestions(cached.papers || []);
+      if (hoursAgo < 24 && (cached.papers || []).length > 0) {
+        setSuggestions(cached.papers);
         setLastGenerated(cached.generated_at);
         setSignals({
           keywords: cached.signal_keywords || [],
@@ -70,7 +70,7 @@ export function useSuggestions(userId, library, chains) {
 
   async function generateSuggestions() {
     // FIX 4: guard — need at least 2 papers to produce meaningful signals
-    if (!userId || library.length < 2) {
+    if (!userId || library.length < 1) {
       setSuggestions([]);
       setLoading(false);
       return;

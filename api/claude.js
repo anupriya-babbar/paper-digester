@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   const { prompt, maxTokens = 1000, system } = req.body;
-  const safeMaxTokens = Math.min(maxTokens, 3000);
+  const safeMaxTokens = Math.min(maxTokens, 4500);
 
   if (!prompt) {
     return res.status(400).json({ error: 'prompt required' });

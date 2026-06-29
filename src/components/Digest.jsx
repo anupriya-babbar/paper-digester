@@ -68,62 +68,77 @@ export default function Digest({ onPaperSaved }) {
       const preview = text.slice(0, 500);
       console.log('PDF extracted text (first 500 chars):\n', preview);
       setExtractedPreview(preview);
-      setLoadingStatus(`Extracted ${pages} pages. Calling Groq AI…`);
+      setLoadingStatus(`Extracted ${pages} pages. Analyzing with AI…`);
       const prompt = prompts[mode](text);
-      const raw = await callClaude(prompt, 1200);
+      const tokenBudget = { tldr: 800, full: 4500, eli5: 1200, methodology: 3000 };
+      const raw = await callClaude(prompt, tokenBudget[mode] || 1200);
       setLoadingStatus('Parsing response…');
-      const parsed = JSON.parse(raw.trim());
-      setResult(parsed);
-      const tldrText = mode === 'full' || mode === 'eli5' || mode === 'methodology'
-        ? (parsed.oneliner || '')
-        : (parsed.tldr || '');
-      const conceptText = mode === 'eli5'
-        ? (parsed.idea || '')
-        : mode === 'methodology'
-          ? (parsed.architecture || '')
-          : (parsed.concept || '');
-      const findingsText = mode === 'full' && Array.isArray(parsed.mechanics)
-        ? parsed.mechanics.map((m) => `• ${m.name}: ${m.explanation}`).join('\n')
-        : mode === 'eli5'
-          ? [parsed.before, parsed.how, parsed.after].filter(Boolean).join('\n\n')
-          : '';
-      onPaperSaved({
-        id: Date.now().toString(),
-        title: parsed.title || file.name.replace('.pdf', ''),
-        authors: parsed.authors || '',
-        year: parsed.year || '',
-        tldr: tldrText,
-        oneliner: parsed.oneliner || '',
-        concept: conceptText,
-        findings: findingsText,
-        key_advantage: parsed.keyAdvantage || parsed.key_advantage || '',
-        keyAdvantage: parsed.keyAdvantage || '',
-        results: parsed.results || '',
-        figures: parsed.figures || '',
-        mechanics: parsed.mechanics || [],
-        keywords: parsed.keywords || [],
-        // tldr mode
-        keyNumber: parsed.keyNumber || '',
-        // full mode
-        problem: parsed.problem || '',
-        keyNumbers: parsed.keyNumbers || [],
-        limitations: parsed.limitations || '',
-        // eli5 mode
-        before: parsed.before || '',
-        idea: parsed.idea || '',
-        how: parsed.how || '',
-        after: parsed.after || '',
-        // methodology mode
-        priorWork: parsed.priorWork || '',
-        architecture: parsed.architecture || '',
-        trainingDetails: parsed.trainingDetails || {},
-        evaluation: parsed.evaluation || {},
-        ablations: parsed.ablations || '',
-        mode,
-        source: 'upload',
-        summarized: true,
-        addedAt: new Date().toISOString(),
-      });
+      const cleaned = raw.trim().replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+      console.log('[Digest] cleaned JSON length:', cleaned.length, 'first char:', cleaned[0]);
+      const parsed = JSON.parse(cleaned);
+      // Normalize keywords — ensure flat string array, max 6 items
+      if (parsed.keywords) {
+        parsed.keywords = parsed.keywords
+          .map(k => (typeof k === 'object' ? k.tag || k.name || JSON.stringify(k) : String(k)))
+          .slice(0, 6);
+      }
+      try {
+        setResult(parsed);
+        const tldrText = mode === 'full' || mode === 'eli5' || mode === 'methodology'
+          ? (parsed.oneliner || '')
+          : (parsed.tldr || '');
+        const conceptText = mode === 'eli5'
+          ? (parsed.idea || '')
+          : mode === 'methodology'
+            ? (parsed.architecture || '')
+            : (parsed.concept || '');
+        const findingsText = mode === 'full' && Array.isArray(parsed.mechanics)
+          ? parsed.mechanics.map((m) => `• ${m.name}: ${m.explanation}`).join('\n')
+          : mode === 'eli5'
+            ? [parsed.before, parsed.how, parsed.after].filter(Boolean).join('\n\n')
+            : '';
+        onPaperSaved({
+          id: Date.now().toString(),
+          title: parsed.title || file.name.replace('.pdf', ''),
+          authors: parsed.authors || '',
+          year: parsed.year || '',
+          tldr: tldrText,
+          oneliner: parsed.oneliner || '',
+          concept: conceptText,
+          findings: findingsText,
+          key_advantage: parsed.keyAdvantage || parsed.key_advantage || '',
+          keyAdvantage: parsed.keyAdvantage || '',
+          results: parsed.results || '',
+          figures: parsed.figures || '',
+          mechanics: parsed.mechanics || [],
+          keywords: parsed.keywords || [],
+          // tldr mode
+          keyNumber: parsed.keyNumber || '',
+          // full mode
+          problem: parsed.problem || '',
+          keyNumbers: parsed.keyNumbers || [],
+          limitations: parsed.limitations || '',
+          // eli5 mode
+          before: parsed.before || '',
+          idea: parsed.idea || '',
+          how: parsed.how || '',
+          after: parsed.after || '',
+          // methodology mode
+          priorWork: parsed.priorWork || '',
+          architecture: parsed.architecture || '',
+          trainingDetails: parsed.trainingDetails || {},
+          evaluation: parsed.evaluation || {},
+          ablations: parsed.ablations || '',
+          abstract: text ? text.slice(0, 3000) : '',
+          mode,
+          source: 'upload',
+          summarized: true,
+          addedAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error('Digest save error:', err.message, err.stack);
+        setLoadingStatus('Error: ' + err.message);
+      }
     } catch (err) {
       if (err.message.includes('JSON')) {
         setError('Claude returned an unexpected format. Please try again.');
