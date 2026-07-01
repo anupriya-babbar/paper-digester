@@ -60,6 +60,52 @@ function parseResults(data) {
     .filter((p) => p.arxiv_id && p.title);
 }
 
+function parseResultsRelaxed(data) {
+  return (data.results || [])
+    .map((p) => {
+      // Try to get arxiv URL first
+      const arxivLocation = p.locations?.find((l) =>
+        l.landing_page_url?.includes('arxiv.org')
+      );
+      // Fall back to any open access URL
+      const anyOALocation = p.locations?.find((l) =>
+        l.landing_page_url && l.is_oa
+      );
+      const location = arxivLocation || anyOALocation;
+      if (!location?.landing_page_url) return null;
+
+      const url = location.landing_page_url;
+      const arxivId = url.includes('arxiv.org')
+        ? url.replace('https://arxiv.org/abs/', '')
+            .replace('http://arxiv.org/abs/', '').trim()
+        : null;
+
+      let abstract = '';
+      if (p.abstract_inverted_index) {
+        const words = {};
+        Object.entries(p.abstract_inverted_index).forEach(([word, positions]) => {
+          positions.forEach((pos) => { words[pos] = word; });
+        });
+        abstract = Object.keys(words).sort((a, b) => Number(a) - Number(b))
+          .map((k) => words[k]).join(' ');
+      }
+
+      return {
+        title: p.title || '',
+        authors: (p.authorships || []).slice(0, 3)
+          .map((a) => a.author?.display_name || '').filter(Boolean).join(', '),
+        year: p.publication_year,
+        venue: '',
+        abstract,
+        arxiv_id: arxivId,
+        citationCount: p.cited_by_count || 0,
+        keywords: (p.topics || []).slice(0, 4).map((t) => t.display_name),
+        publicationDate: p.publication_year ? `${p.publication_year}-01-01` : null,
+      };
+    })
+    .filter((p) => p !== null && p.title);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -154,19 +200,28 @@ export default async function handler(req, res) {
     const titleResults = titleRes.ok ? parseResults(await titleRes.json()) : [];
 
     // STEP 2 — Keyword fallback when title search yields fewer than 3 arXiv results
+    const kwUrl =
+      `https://api.openalex.org/works` +
+      `?search=${encodeURIComponent(query)}` +
+      `&filter=open_access.is_oa:true` +
+      `&per_page=25` +
+      `&sort=relevance_score:desc` +
+      `&select=${SELECT}` +
+      `&${MAILTO}`;
+
     let kwResults = [];
     if (titleResults.length < 3) {
-      const kwUrl =
-        `https://api.openalex.org/works` +
-        `?search=${encodeURIComponent(query)}` +
-        `&filter=open_access.is_oa:true` +
-        `&per_page=25` +
-        `&sort=relevance_score:desc` +
-        `&select=${SELECT}` +
-        `&${MAILTO}`;
-
-      const kwRes = await fetch(kwUrl, { headers: HEADERS });
-      kwResults = kwRes.ok ? parseResults(await kwRes.json()) : [];
+      console.log('[search] STEP2 triggering keyword fallback for:', query);
+      try {
+        const kwRes = await fetch(kwUrl, { headers: HEADERS });
+        console.log('[search] STEP2 kwRes status:', kwRes.status);
+        const kwData = await kwRes.json();
+        console.log('[search] STEP2 raw results count:', kwData?.results?.length);
+        kwResults = parseResults(kwData);
+        console.log('[search] STEP2 after arXiv filter:', kwResults.length);
+      } catch(e) {
+        console.error('[search] STEP2 error:', e.message);
+      }
     }
 
     // Combine, deduplicate by arxiv_id
@@ -176,6 +231,25 @@ export default async function handler(req, res) {
       seen.add(p.arxiv_id);
       return true;
     });
+
+    if (combined.length === 0) {
+      const kwUrl =
+        `https://api.openalex.org/works` +
+        `?search=${encodeURIComponent(query)}` +
+        `&filter=open_access.is_oa:true` +
+        `&per_page=25` +
+        `&sort=relevance_score:desc` +
+        `&select=${SELECT}` +
+        `&${MAILTO}`;
+      const relaxedRes = await fetch(kwUrl, { headers: HEADERS });
+      const relaxedResults = relaxedRes.ok
+        ? parseResultsRelaxed(await relaxedRes.json())
+        : [];
+      if (relaxedResults.length > 0) {
+        console.log('[search] strategy used: relaxed results:', relaxedResults.length);
+        return res.status(200).json({ data: relaxedResults.slice(0, 6) });
+      }
+    }
 
     const strategy = kwResults.length > 0 ? 'keyword' : 'title';
     console.log('[search] strategy used:', strategy, 'results:', combined.length);
