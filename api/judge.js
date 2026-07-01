@@ -13,7 +13,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // Token budgets per eval type — faithfulness needs room for issue lists
 const TOKEN_LIMITS = {
   faithfulness:         400,
-  coverage:             250,
+  coverage:             400,
   modeFidelity:         300,
   citationGrounding:    200,
   contradictionReality: 250,
@@ -63,6 +63,10 @@ export default async function handler(req, res) {
     } catch {
       // If Claude still wrapped in markdown, return a safe error shape
       result = { error: 'parse_failed', raw: raw.slice(0, 300) };
+    }
+
+    if (result?.error) {
+      console.error('[judge] parse failed for', evalType, ':', result.raw?.slice(0, 200));
     }
 
     return res.status(200).json({ result, evalType });

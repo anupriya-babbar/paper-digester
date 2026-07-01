@@ -121,12 +121,16 @@ export function useEval() {
 
     // Run LLM checks in parallel where possible
     // faithfulness + coverage need abstract; modeFidelity doesn't
+    console.log('[useEval] calling judges - hasAbstract:', hasAbstract,
+      'abstractLength:', abstract?.length,
+      'summaryTextLength:', summaryText?.length);
     const [faithfulness, coverage, modeFidelity] = await Promise.all([
       hasAbstract
         ? callJudge('faithfulness', faithfulnessPrompt(abstract, summaryText))
         : Promise.resolve(null),
       hasAbstract
-        ? callJudge('coverage', coveragePrompt(abstract, summaryText, fullText))
+        ? (console.log('[useEval] calling coverage judge'),
+           callJudge('coverage', coveragePrompt(abstract, summaryText, fullText)))
         : Promise.resolve(null),
       summaryText
         ? callJudge('modeFidelity', modeFidelityPrompt(mode, summaryText))
