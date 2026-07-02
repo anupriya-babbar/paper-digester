@@ -131,18 +131,6 @@ export default function LibraryOverview({
   return (
     <div style={{ maxWidth: 920, margin: '0 auto', padding: '28px 24px 60px' }}>
 
-      <div style={{ position: 'sticky', top: 0, zIndex: 10,
-        background: 'var(--bg)', paddingTop: 28, paddingBottom: 16,
-        marginBottom: 16 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)',
-          margin: 0, marginBottom: 4 }}>
-          Paper Digester
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-          Your AI research synthesis library
-        </p>
-      </div>
-
       {/* Stats row */}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 32 }}>
         <StatCard label="Total papers" value={stats.total} icon="📄" />

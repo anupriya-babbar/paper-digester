@@ -289,6 +289,23 @@ export default function App() {
             </button>
           )}
 
+          {/* Home title */}
+          <div
+            onClick={handleGoToOverview}
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--accent)',
+              cursor: 'pointer',
+              marginLeft: 12,
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+            }}
+            title="Go to home"
+          >
+            Paper Digester
+          </div>
+
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 

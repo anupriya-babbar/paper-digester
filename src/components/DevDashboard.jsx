@@ -223,7 +223,7 @@ export default function DevDashboard({ library, chains, userId }) {
 
       <div style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 4 }}>
-          📊 Developer Dashboard
+          📊 Admin Dashboard
         </h2>
         <p style={{ fontSize: 12, color: 'var(--muted)' }}>
           Internal quality monitoring — only visible to admin
