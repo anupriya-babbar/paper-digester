@@ -251,6 +251,54 @@ export default async function handler(req, res) {
       }
     }
 
+    // FINAL FALLBACK — search arXiv API directly
+    if (combined.length === 0) {
+      try {
+        const arXivSearchUrl =
+          `https://export.arxiv.org/api/query?search_query=ti:${encodeURIComponent(query)}&start=0&max_results=6&sortBy=relevance`;
+
+        const arXivRes = await fetch(arXivSearchUrl, { headers: HEADERS });
+        if (arXivRes.ok) {
+          const xml = await arXivRes.text();
+
+          // Parse all entries from XML
+          const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)];
+          const papers = entries.map(entry => {
+            const content = entry[1];
+
+            const title = content.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim().replace(/\s+/g, ' ') || '';
+            const abstract = content.match(/<summary>([\s\S]*?)<\/summary>/)?.[1]?.trim() || '';
+            const published = content.match(/<published>(.*?)<\/published>/)?.[1] || '';
+            const year = parseInt(published.slice(0, 4)) || null;
+            const authorMatches = [...content.matchAll(/<name>(.*?)<\/name>/g)];
+            const authors = authorMatches.slice(0, 3).map(m => m[1]).join(', ');
+            const idMatch = content.match(/<id>.*?abs\/(.*?)<\/id>/);
+            const arxivId = idMatch?.[1]?.replace(/v\d+$/, '') || null;
+
+            if (!title || !arxivId) return null;
+            return {
+              title,
+              abstract,
+              authors,
+              year,
+              arxiv_id: arxivId,
+              citationCount: 0,
+              keywords: [],
+              publicationDate: published.slice(0, 10) || null,
+              venue: 'arXiv',
+            };
+          }).filter(Boolean);
+
+          if (papers.length > 0) {
+            console.log('[search] strategy used: arxiv-api-search results:', papers.length);
+            return res.status(200).json({ data: papers });
+          }
+        }
+      } catch(e) {
+        console.error('[search] arXiv fallback error:', e.message);
+      }
+    }
+
     const strategy = kwResults.length > 0 ? 'keyword' : 'title';
     console.log('[search] strategy used:', strategy, 'results:', combined.length);
 
