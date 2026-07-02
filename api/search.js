@@ -259,7 +259,7 @@ export default async function handler(req, res) {
     if (papers.length === 0) {
       return res.status(200).json({
         data: [],
-        message: 'No open access papers found. Try different keywords.',
+        message: 'No results found. Tip: search by arXiv ID (e.g. 1706.03762) for guaranteed results.',
       });
     }
 
